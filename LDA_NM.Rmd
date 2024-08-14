@@ -1,0 +1,289 @@
+---
+title: "news media"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+1) Data 
+```{r}
+thesis.df <- read.csv("D:/ai_uk/data_smi_pro.csv", encoding = 'UTF-8')
+thesis.df$Дата <- as.Date(thesis.df$Дата, "%d.%m.%Y")
+#Sys.setlocale("LC_CTYPE", "russian")
+#names(thesis.df) 
+```
+
+2)Filtering
+```{r}
+
+
+#thesis.df = as.data.frame(thesis.df$Дайджест.текста[!duplicated(thesis.df$Дайджест.текста)])
+thesis.df <- thesis.df %>% filter(Тип.посту == 'Пост' | Тип.посту == 'Репост')
+
+
+```
+
+3) Stopwords
+```{r}
+library(rlang)
+library(readr)
+write_lines(stopwords("ru"), "stopwords.txt")
+stopwords_ru = stopwords("ru")
+stopwords_ai = c("интеллект", "искусственный", "и", "на", "в", "по", "или", "для", "в", "а", "как", "это", "с", "мой", "также", "что", "ии", "ai", "который", "твой", "сей", "ком", "свой", "слишком", "нами", "весь", "будь", "чаще", "ваш", "наш", "затем", "еще", "тот", "каждый", "мочь", "оба", "зато", "ваш", "такой", "нередко", "откуда", "очень", "сам", "ты", "однако", "сразу", "кроме", "вообще", "хороший", "пока", "ещё", "intelligence", "artificial", "the", "in", "learning", "to", "machine")
+
+stopwords_com = c("год", "технология", "компания", "новый", "система", "цифровой", "использовать", "время", "решение", "создать", "мир", "развитие", "первый", "основа", "использование", "область", "являться", "приложение", "читать", "пользователь", "сфера")
+
+stopwords_topic = c("знать", "говорить", "делать", "думать", "сделать", "работа", "and", "for", "with", "data", "you", "technology", "from", "new", "science", "and", "the", "являться", "with", "for", "data", "technology", "market", "digital" )
+
+stopwords_en = c("qualcomm", "quantum", "read", "realdoll", "reface", "research", "reuters", "robotics", "rtx", "running", "samsung", "science", "services", "siemens", "siri", "site", "smart", "snapdragon", "software", "sony", "spacex", "specific", "spotify","star", "startup", "store", "streechers", "street", "sun", "super", "syngenta", "system", "systems", "tags", "tapes", "tech", "technologies", "technology", "telegram", "tesla", "that", "the", "tiktok", "times", "toyota", "truesync", "twitter", "uber", "ventures", "verdictum", "view", "vision", "volvo", "watch", "web", "weeder", "whatsapp", "while", "whitechapel", "windows", "with", "word", "world", "woven", "xiaomi", "xxi", "york", "youtube", "zivert", "zoom")
+
+stopwords = append(stopwords_ai, stopwords_ru)
+stopwords = append(stopwords, stopwords_com)
+stopwords = append(stopwords, stopwords_topic)
+stopwords = append(stopwords, stopwords_en)
+write_lines(stopwords, "stopwords.txt")
+```
+
+4) Mallet
+```{r}
+#set.seed(123)
+#mallet.instances <- mallet.import(text.array=as.character(merged_df_NM_18$cleaned_post),
+#                                  stoplist="stopwords.txt") 
+#topic.model$setRandomSeed(123L) 
+```
+
+```{r}
+#set.seed(123)
+#topic.model <- MalletLDA(num.topics=14) # number of topics
+#topic.model$setRandomSeed(123L)
+#topic.model$loadDocuments(mallet.instances) 
+#topic.model$setRandomSeed(123L)
+#topic.model$setAlphaOptimization(20, 50) # optimizing hyperparameters
+#topic.model$setRandomSeed(123L)
+```
+
+```{r}
+#vocabulary <- topic.model$getVocabulary() # corpus dictionary
+#word.freqs <- mallet.word.freqs(topic.model) # frequency table
+
+#top_words <- word.freqs %>%
+#  arrange(desc(word.freq)) %>%
+#  head(3000)
+```
+
+```{r}
+#set.seed(123)
+#topic.model$train(500)
+```
+
+```{r}
+#set.seed(123)
+#topic.model$maximize(10)
+```
+
+```{r}
+#save.mallet.state(topic.model = topic.model, state.file = "D://smi_mallet_state.gz")
+#mallet.topic.model.write(topic.model = topic.model, 'D://mallet/smi_mal.model')
+#topic.words
+```
+
+4) Mallet preloaded 
+
+this is a model that was already trained 
+```{r}
+topic.model_NM <- mallet.topic.model.read('D://mallet/smi_mal.model')
+```
+
+```{r}
+doc.topics_NM <- mallet.doc.topics(topic.model_NM, smoothed=TRUE, normalized=TRUE)
+```
+
+```{r}
+topic.words_NM <- mallet.topic.words(topic.model_NM, smoothed=TRUE, normalized=TRUE)
+vocabulary_NM <- topic.model_NM$getVocabulary() # corpus dictionary
+word.freqs_NM <- mallet.word.freqs(topic.model_NM)
+#topic.words
+```
+
+```{r}
+topic.labels_NM <- mallet.topic.labels(topic.model_NM, topic.words_NM, 10)
+ #topic.labels
+```
+
+The most representative keywords and documents 
+
+```{r}
+lapply(1:nrow(topic.words), function(k) {
+    top <- mallet.top.words(topic.model, topic.words[k,], 10) %>% select("term")
+    cat(paste(k, top, "\n")) 
+})
+
+top.docs <- function(doc.topics, topic, docs, top.n=32) {
+    head(docs[order(-doc.topics[,topic])], top.n)
+}
+
+r14 = as.data.frame(top.docs(doc.topics, 4, merged_df_NM_18$Дайджест.текста))
+```
+
+```{r}
+topic_labels_NM <- mallet.topic.labels(topic.model_NM, num.top.words = 2)
+topic_clusters_NM <- mallet.topic.hclust(doc.topics_NM, topic.words_NM, balance = 0.5)
+plot(topic_clusters_NM, labels=topic_labels_NM, xlab = "", )
+
+```
+
+5) Visualization
+
+
+shares of topics 
+```{r}
+#doc.length <- str_count(thesis.df$cleaned_post, stringr::boundary("word"))
+#doc.length[doc.length==0] <- 0.000001 # avoid division by zero
+#json <- createJSON(phi = topic.words, theta=doc.topics, doc.length=doc.length, vocab=vocabulary, term.frequency=word.freqs$word.freq)
+
+#serVis(json, out.dir="tartu_smi", open.browser=TRUE)
+
+
+m_NM <- mallet_model(doc_topics = doc.topics_NM, doc_ids = thesis.df$id, vocab = 
+vocabulary_NM, topic_words = topic.words_NM, model = topic.model_NM)
+meta_NM <- data.frame(id = thesis.df$id, pubdate = as.Date(thesis.df$Дата, "%d.%m.%Y"))
+metadata(m_NM) <- meta_NM
+theme_update(strip.text=element_text(size=7), 
+axis.text=element_text(size=7))
+a(m_NM) %>%
+plot_series(labels=topic_labels(m_NM, 2))
+
+```
+
+shares of topics on one plot
+```{r}
+
+series_NM <- a(m_NM, 'days')
+
+plot = ggplot(series_NM, aes(x=pubdate, y=weight, fill=as.character(topic)))
+plot + 
+  geom_area() +
+  geom_area(alpha=0.6 , size=.2, colour="white") +
+  theme_bw() + scale_fill_manual(values=cols)
+  
+
+```
+
+6) Sentiment analysis
+```{r}
+# Get the most probable topic for each document
+get_top_topic <- function(doc_topic_prob) {
+  max_prob_index <- which.max(doc_topic_prob)
+  return(max_prob_index)
+}
+
+# Extract the most probable topic for each document
+document_topics_NM <- apply(doc.topics_NM, 1, get_top_topic)
+
+# Create a dataframe with document index and corresponding most probable topic
+document_topics_NM <- data.frame(
+  document_index = seq_along(document_topics_NM),
+  topic = document_topics_NM
+)
+
+#add topics to df
+thesis.df$document_index <- seq_len(nrow(thesis.df))
+
+# Merge document_topics_social with thesis.df_social based on document index
+merged_df_NM <- merge(thesis.df, document_topics_NM, by = "document_index", all.x = TRUE)
+
+# Remove the temporary document index column
+merged_df_NM$document_index <- NULL
+
+
+
+#word scores data
+word_scores_df <- read.csv('D://mallet/kartaslovsent.csv', encoding = 'UTF-8', sep = ';')
+
+word_scores_df <- word_scores_df %>% filter(pstvNgtvDisagreementRatio < 0.5)
+word_scores_df <- word_scores_df %>% filter(!term %in% stopwords)
+word_scores_df <- word_scores_df %>% select(term, tag, value)
+
+#an empty vector to store scores for each document
+total_scores_NM <- numeric(length = nrow(merged_df_NM))
+
+# Function to calculate normalized score for a document
+calculate_normalized_score <- function(document_text) {
+  # Tokenize the document into words
+  words <- unlist(strsplit(document_text, "\\s+"))
+  
+  # Filter words present in the word_scores_df and get their scores
+  word_scores <- word_scores_df$value[match(words, word_scores_df$term)]
+  
+  # Sum up the scores for all words in the document
+  total_score <- sum(word_scores, na.rm = TRUE)
+  
+  # Calculate the number of words in the document
+  num_words <- length(words)
+  
+  # Normalize the total score by dividing by the number of words
+  normalized_score <- total_score / num_words
+  
+  return(normalized_score)
+}
+
+# Apply the function to each document in cleaned_post
+normalized_scores_NM <- sapply(merged_df_NM$cleaned_post, calculate_normalized_score)
+
+# Add the normalized_scores as a new column to merged_df_ew
+merged_df_NM$normalized_score <- normalized_scores_NM
+
+# Filter out posts with 'not' in order to exclude posts with the opposite score
+sent_df_NM <- merged_df_NM %>% filter(!grepl(' не ', Дайджест.текста))
+sent_social_mean_NM <- sent_df_NM %>% group_by(Дата) %>% summarize(mean_sent = mean(normalized_score))
+
+
+# visualization
+
+sent_social_mean_NM$Дата <- as.Date(sent_social_mean_NM$Дата, '%d.%m.%Y')
+sent_social_mean_NM <- sent_social_mean_NM %>% arrange(Дата)
+#Add calculated moving averages to existing data frame
+sent_social_mean_NM = sent_social_mean_NM %>% mutate(rol = rollmean(sent_social_mean_NM$mean_sent, 5,fill = NA))
+
+
+ggplot() + geom_line(data = sent_social_mean_NM, aes(x = as.Date(Дата, '%d.%m.%Y'), y = mean_sent)) + geom_line(data = sent_social_mean_NM, aes(x = as.Date(Дата, '%d.%m.%Y'), y = rol),color="red") + 
+  xlab("date") + ylab("Mean normalized sentiment") + theme_bw()
+
+
+# for each topic
+sent_social_mean_NM_top <- sent_df_NM %>% 
+  group_by(Дата, topic) %>% 
+  summarize(mean_normalized_score_top = mean(normalized_score))
+# Convert Дата to Date format
+sent_social_mean_NM_top$Дата <- as.Date(sent_social_mean_NM_top$Дата, '%d.%m.%Y')
+
+# Arrange by Дата
+sent_social_mean_NM_top <- sent_social_mean_NM_top %>% arrange(topic, Дата)
+
+# Calculate rolling mean
+sent_social_mean_NM_top$rol_top <- zoo::rollmean(sent_social_mean_NM_top$mean_normalized_score_top, 5, fill = NA)
+
+# Plot the data
+ggplot(sent_social_mean_NM_top, aes(x = as.Date(Дата), y = mean_normalized_score_top)) +
+  geom_line() +
+  geom_line(aes(y = rol_top), color = "red") + 
+  facet_wrap(~topic, scales = "free_y") +
+  xlab("Date") +
+  ylab("Mean normalized sentiment") + 
+  theme_bw()
+
+
+# wordcloud 
+#merged_df_NM_18 = merged_df_NM %>% filter(topic == 18)
+#library(tm)
+#library(wordcloud)
+#corpus <- Corpus(VectorSource(merged_df_NM_18$cleaned_post))
+#tdm <-TermDocumentMatrix(corpus, control=list(wordLengths=c(1,Inf)))
+#freq <- slam::row_sums(tdm)
+#words <- names(freq)  
+#wordcloud(words, freq, min.freq=27)
+```
+

@@ -1,0 +1,85 @@
+---
+title: "LDA_b_s"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+1) Filtering
+```{r}
+
+big <- c('Київ', 'Харків', 'Дніпро', 'Одеса', 'Львів', 'Запоріжжя', 'Кривий Ріг', 'Миколаїв', 'Маріуполь', 'Вінниця')
+thesis.df_social_b <- thesis.df_social_ew[thesis.df_social_ew$Місто %in% big, ]
+  
+topic.model_social_b <- MalletLDA(num.topics=35) # number of topics
+topic.model_social_b$setRandomSeed(12345L)
+
+mallet.instances_social_b <- mallet.import(text.array=as.character(thesis.df_social_b$cleaned_post),
+                                  stoplist="stopwords.txt") 
+
+topic.model_social_b$loadDocuments(mallet.instances_social_b) 
+
+topic.model_social_b$setAlphaOptimization(20, 50) # optimizing hyperparameters
+
+vocabulary_social_b <- topic.model_social_b$getVocabulary() # corpus dictionary
+word.freqs_social_b <- mallet.word.freqs(topic.model_social_b) # frequency table
+
+
+
+
+
+thesis.df_social_s <- thesis.df_social_ew[!thesis.df_social_ew$Місто %in% big, ]
+thesis.df_social_s <- thesis.df_social_s[!thesis.df_social_s$Місто %in% "", ]
+
+
+topic.model_social_s <- MalletLDA(num.topics=35) # number of topics
+topic.model_social_s$setRandomSeed(123L)
+
+mallet.instances_social_s <- mallet.import(text.array=as.character(thesis.df_social_s$cleaned_post),
+                                  stoplist="stopwords.txt") 
+
+topic.model_social_s$loadDocuments(mallet.instances_social_s) 
+
+topic.model_social_s$setAlphaOptimization(20, 50) # optimizing hyperparameters
+
+vocabulary_social_s <- topic.model_social_s$getVocabulary() # corpus dictionary
+word.freqs_social_s <- mallet.word.freqs(topic.model_social_s) # frequency table
+```
+
+```{r}
+
+set.seed(123)
+topic.model_social_b$train(500)
+topic.model_social_b$maximize(10)
+doc.topics_social_b <- mallet.doc.topics(topic.model_social_b, smoothed=TRUE, normalized=TRUE)
+topic.words_social_b <- mallet.topic.words(topic.model_social_b, smoothed=TRUE, normalized=TRUE)
+topic.labels_social_b <- mallet.topic.labels(topic.model_social_b, topic.words_social_b, 10)
+
+set.seed(123)
+topic.model_social_s$train(500)
+topic.model_social_s$maximize(10)
+doc.topics_social_s <- mallet.doc.topics(topic.model_social_s, smoothed=TRUE, normalized=TRUE)
+topic.words_social_s <- mallet.topic.words(topic.model_social_s, smoothed=TRUE, normalized=TRUE)
+topic.labels_social_s <- mallet.topic.labels(topic.model_social_s, topic.words_social_s, 10)
+
+lapply(1:nrow(topic.words_social_b), function(k) {
+    top <- mallet.top.words(topic.model_social_b, topic.words_social_b[k,], 10) %>% select("term")
+    cat(paste(k, top, "\n")) 
+})
+
+big23 = as.data.frame(top.docs(doc.topics_social_b, 23, thesis.df_social_b$Дайджест.текста))
+
+
+
+lapply(1:nrow(topic.words_social_s), function(k) {
+    top <- mallet.top.words(topic.model_social_s, topic.words_social_s[k,], 10) %>% select("term")
+    cat(paste(k, top, "\n")) 
+})
+
+sm27 = as.data.frame(top.docs(doc.topics_social_s, 27, thesis.df_social_s$Дайджест.текста))
+
+save.mallet.state(topic.model = topic.model_social_s, state.file = "D://mallet/social_mallet_s_state.gz")
+mallet.topic.model.write(topic.model = topic.model_social_s, 'D://mallet/social_s_mal.model')
+```

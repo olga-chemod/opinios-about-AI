@@ -1,0 +1,293 @@
+---
+title: "social media news groups"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+1) Data
+```{r}
+thesis.df2 <- read.csv("D:/ai_uk/data_groups_pro.csv", encoding = 'UTF-8')
+thesis.df2$Дата <- as.Date(thesis.df2$Дата, "%d.%m.%Y")
+#Sys.setlocale("LC_CTYPE", "russian")
+#names(thesis.df) 
+```
+
+2) Filtering
+```{r}
+#thesis.df = as.data.frame(thesis.df$Дайджест.текста[!duplicated(thesis.df$Дайджест.текста)])
+
+
+thesis.df2 <- thesis.df2 %>% filter(Тип.посту == 'Пост' | Тип.посту == 'Репост')
+
+thesis.df2 = thesis.df2[!duplicated(thesis.df2$cleaned_post), ]
+
+#data social new pro
+thesis.df2_w = thesis.df2[grepl("bot ", thesis.df2$Дайджест.текста),]
+thesis.df2 = thesis.df2[!grepl("пиар", thesis.df2$Місце.публікації),]
+thesis.df2 = thesis.df2[!grepl("ПИАР", thesis.df2$Місце.публікації),]
+thesis.df2 = thesis.df2[!grepl("Пиар", thesis.df2$Місце.публікації),]
+thesis.df2 = thesis.df2[!grepl("реклама", thesis.df2$Місце.публікації),]
+thesis.df2 = thesis.df2[!grepl("РЕКЛАМА", thesis.df2$Місце.публікації),]
+thesis.df2 = thesis.df2[!grepl("Реклама", thesis.df2$Місце.публікації),]
+thesis.df2 = thesis.df2[!grepl("ЗАРАБОТОК ДЛЯ ВСЕХ", thesis.df2$Автор),]
+thesis.df2 = thesis.df2[!grepl("Елена Калинина", thesis.df2$Автор),]
+thesis.df2 = thesis.df2[!grepl("Ньюсрум", thesis.df2$Автор),]
+thesis.df2 = thesis.df2[!grepl("Raquel Assis", thesis.df2$Автор),]
+thesis.df2 = thesis.df2[!grepl("Nikolay Vasilchuk", thesis.df2$Автор),]
+
+
+
+```
+
+3) Stopwords
+```{r}
+library(rlang)
+library(readr)
+write_lines(stopwords("ru"), "stopwords.txt")
+stopwords_ru = stopwords("ru")
+stopwords_ai = c("интеллект", "искусственный", "и", "на", "в", "по", "или", "для", "в", "а", "как", "это", "с", "мой", "также", "что", "ии", "ai", "который", "твой", "сей", "ком", "свой", "слишком", "нами", "весь", "будь", "чаще", "ваш", "наш", "затем", "еще", "тот", "каждый", "мочь", "оба", "зато", "ваш", "такой", "нередко", "откуда", "очень", "сам", "ты", "однако", "сразу", "кроме", "вообще", "хороший", "пока", "ещё", "intelligence", "artificial", "the", "in", "learning", "to", "machine")
+
+stopwords_com = c("год", "технология", "компания", "новый", "система", "цифровой", "использовать", "время", "решение", "создать", "мир", "развитие", "первый", "основа", "использование", "область", "являться", "приложение", "читать", "пользователь", "сфера")
+
+stopwords_topic = c("знать", "говорить", "делать", "думать", "сделать", "работа", "and", "for", "with", "data", "you", "technology", "from", "new", "science", "and", "the", "являться", "with", "for", "data", "technology", "market", "digital" )
+
+stopwords_en = c("qualcomm", "quantum", "read", "realdoll", "reface", "research", "reuters", "robotics", "rtx", "running", "samsung", "science", "services", "siemens", "siri", "site", "smart", "snapdragon", "software", "sony", "spacex", "specific", "spotify","star", "startup", "store", "streechers", "street", "sun", "super", "syngenta", "system", "systems", "tags", "tapes", "tech", "technologies", "technology", "telegram", "tesla", "that", "the", "tiktok", "times", "toyota", "truesync", "twitter", "uber", "ventures", "verdictum", "view", "vision", "volvo", "watch", "web", "weeder", "whatsapp", "while", "whitechapel", "windows", "with", "word", "world", "woven", "xiaomi", "xxi", "york", "youtube", "zivert", "zoom")
+
+stopwords = append(stopwords_ai, stopwords_ru)
+stopwords = append(stopwords, stopwords_com)
+stopwords = append(stopwords, stopwords_topic)
+stopwords = append(stopwords, stopwords_en)
+write_lines(stopwords, "stopwords.txt")
+```
+
+4) Mallet (no need to run, the model is saved and preloaded later)
+```{r}
+#set.seed(123)
+#mallet.instances2 <- mallet.import(text.array=as.character(thesis.df2$cleaned_post),
+#                                  stoplist="stopwords.txt") 
+#topic.model$setRandomSeed(123L) 
+```
+
+```{r}
+#set.seed(123)
+#topic.model2 <- MalletLDA(num.topics=35) # number of topics
+#topic.model2$setRandomSeed(123L)
+#topic.model2$loadDocuments(mallet.instances2) 
+
+#topic.model2$setAlphaOptimization(20, 50) # optimizing hyperparameters
+
+```
+
+```{r}
+#vocabulary2 <- topic.model2$getVocabulary() # corpus dictionary
+#word.freqs2 <- mallet.word.freqs(topic.model2) # frequency table
+
+#top_words2 <- word.freqs2 %>%
+#  arrange(desc(word.freq)) %>%
+#  head(3000)
+```
+
+```{r}
+#set.seed(123)
+#topic.model2$train(500)
+```
+
+```{r}
+#set.seed(123)
+#topic.model2$maximize(10)
+```
+
+```{r}
+#doc.topics2 <- mallet.doc.topics(topic.model2, smoothed=TRUE, normalized=TRUE)
+```
+
+```{r}
+#topic.words2 <- mallet.topic.words(topic.model2, smoothed=TRUE, normalized=TRUE)
+```
+
+```{r}
+#topic.labels2 <- mallet.topic.labels(topic.model2, topic.words2, 10)
+
+#save.mallet.state(topic.model = topic.model2, state.file = "D://mallet/smi_groups_mallet_state2.gz")
+#mallet.topic.model.write(topic.model = topic.model2, 'D://mallet/smi_groups_mal2.model')
+```
+
+
+4) Preloading the model
+```{r}
+model_SM_N <- mallet.topic.model.read('D://mallet/smi_groups_mal2.model')
+
+doc.topics_SM_N <- mallet.doc.topics(model_SM_N, smoothed=TRUE, normalized=TRUE)
+topic.words_SM_N <- mallet.topic.words(model_SM_N, smoothed=TRUE, normalized=TRUE)
+topic.labels_SM_N <- mallet.topic.labels(model_SM_N, topic.words_SM_N, 10)
+vocabulary_SM_N <- model_SM_N$getVocabulary()
+```
+
+Most representative documents
+
+```{r}
+#keywords for topics
+lapply(1:nrow(topic.words_SM_N), function(k) {
+    top <- mallet.top.words(model_SM_N, topic.words_SM_N[k,], 10) %>% select("term")
+    cat(paste(k, top, "\n")) 
+})
+
+
+top.docs <- function(doc.topics, topic, docs, top.n=82) {
+    head(docs[order(-doc.topics[,topic])], top.n)
+}
+
+representative_documents = as.data.frame(top.docs(doc.topics_SM_N, 1, thesis.df2$Дайджест.текста))
+ 
+```
+
+```{r}
+topic_labels_SM_N <- mallet.topic.labels(model_SM_N, num.top.words = 2)
+topic_clusters_SM_N <- mallet.topic.hclust(doc.topics_SM_N, topic.words2, balance = 0.5)
+plot(topic_clusters_SM_N, labels=topic_labels_SM_N, xlab = "", )
+```
+
+5) Visualization
+
+shares of topics 
+```{r}
+
+m_SM_N <- mallet_model(doc_topics = doc.topics_SM_N, doc_ids = thesis.df2$id, vocab = 
+vocabulary_SM_N, topic_words = topic.words_SM_N, model = model_SM_N)
+meta_SM_N <- data.frame(id = thesis.df2$id, pubdate = as.Date(thesis.df2$Дата, "%d.%m.%Y"))
+metadata(m_SM_N) <- meta_SM_N
+theme_update(strip.text=element_text(size=7), 
+axis.text=element_text(size=7))
+a(m_SM_N) %>%
+plot_series(labels=topic_labels(m_SM_N, 2))
+
+```
+
+
+```{r}
+
+series_SM_N <- a(m_SM_N, 'days')
+
+cols = rainbow(35, s=.6, v=.9)[sample(1:35,35)]
+
+plot2 = ggplot(series_SM_N, aes(x=pubdate, y=weight, fill=as.character(topic)))
+plot2 + 
+  geom_area() +
+  geom_area(alpha=0.6 , size=.2, colour="white") +
+  theme_bw() + scale_fill_manual(values=cols)
+  
+
+```
+
+6) Sentiment analysis
+```{r}
+# Get the most probable topic for each document
+get_top_topic <- function(doc_topic_prob) {
+  max_prob_index <- which.max(doc_topic_prob)
+  return(max_prob_index)
+}
+
+# Extract the most probable topic for each document
+document_topics_SM_N <- apply(doc.topics_SM_N, 1, get_top_topic)
+
+# Create a dataframe with document index and corresponding most probable topic
+document_topics_SM_N <- data.frame(
+  document_index = seq_along(document_topics_SM_N),
+  topic = document_topics_SM_N
+)
+
+#add topics to df
+thesis.df2$document_index <- seq_len(nrow(thesis.df2))
+
+# Merge document_topics_social with thesis.df_social based on document index
+merged_df_SM_N <- merge(thesis.df2, document_topics_SM_N, by = "document_index", all.x = TRUE)
+
+# Remove the temporary document index column
+merged_df_SM_N$document_index <- NULL
+
+
+
+#word scores data
+word_scores_df <- read.csv('D://mallet/kartaslovsent.csv', encoding = 'UTF-8', sep = ';')
+
+word_scores_df <- word_scores_df %>% filter(pstvNgtvDisagreementRatio < 0.5)
+word_scores_df <- word_scores_df %>% filter(!term %in% stopwords)
+word_scores_df <- word_scores_df %>% select(term, tag, value)
+
+#an empty vector to store scores for each document
+total_scores_SM_N <- numeric(length = nrow(merged_df_SM_N))
+
+# Function to calculate normalized score for a document
+calculate_normalized_score <- function(document_text) {
+  # Tokenize the document into words
+  words <- unlist(strsplit(document_text, "\\s+"))
+  
+  # Filter words present in the word_scores_df and get their scores
+  word_scores <- word_scores_df$value[match(words, word_scores_df$term)]
+  
+  # Sum up the scores for all words in the document
+  total_score <- sum(word_scores, na.rm = TRUE)
+  
+  # Calculate the number of words in the document
+  num_words <- length(words)
+  
+  # Normalize the total score by dividing by the number of words
+  normalized_score <- total_score / num_words
+  
+  return(normalized_score)
+}
+
+# Apply the function to each document in cleaned_post
+normalized_scores_SM_N <- sapply(merged_df_SM_N$cleaned_post, calculate_normalized_score)
+
+# Add the normalized_scores as a new column to merged_df_ew
+merged_df_SM_N$normalized_score <- normalized_scores_SM_N
+
+# Filter out posts with 'not' in order to exclude posts with the opposite score
+sent_df_SM_N <- merged_df_SM_N %>% filter(!grepl(' не ', Дайджест.текста))
+sent_social_mean_SM_N <- sent_df_SM_N %>% group_by(Дата) %>% summarize(mean_sent = mean(normalized_score))
+
+
+# visualization
+
+sent_social_mean_SM_N$Дата <- as.Date(sent_social_mean_SM_N$Дата, '%d.%m.%Y')
+sent_social_mean_SM_N <- sent_social_mean_SM_N %>% arrange(Дата)
+#Add calculated moving averages to existing data frame
+sent_social_mean_SM_N = sent_social_mean_SM_N %>% mutate(rol = rollmean(sent_social_mean_SM_N$mean_sent, 5,fill = NA))
+
+
+ggplot() + geom_line(data = sent_social_mean_SM_N, aes(x = as.Date(Дата, '%d.%m.%Y'), y = mean_sent)) + geom_line(data = sent_social_mean_SM_N, aes(x = as.Date(Дата, '%d.%m.%Y'), y = rol),color="red") + 
+  xlab("date") + ylab("Mean normalized sentiment") + theme_bw()
+
+
+# for each topic
+sent_social_mean_SM_N_top <- sent_df_SM_N %>% 
+  group_by(Дата, topic) %>% 
+  summarize(mean_normalized_score_top = mean(normalized_score))
+# Convert Дата to Date format
+sent_social_mean_SM_N_top$Дата <- as.Date(sent_social_mean_SM_N_top$Дата, '%d.%m.%Y')
+
+# Arrange by Дата
+sent_social_mean_SM_N_top <- sent_social_mean_SM_N_top %>% arrange(topic, Дата)
+
+# Calculate rolling mean
+sent_social_mean_SM_N_top$rol_top <- zoo::rollmean(sent_social_mean_SM_N_top$mean_normalized_score_top, 5, fill = NA)
+
+# Plot the data
+ggplot(sent_social_mean_SM_N_top, aes(x = as.Date(Дата), y = mean_normalized_score_top)) +
+  geom_line() +
+  geom_line(aes(y = rol_top), color = "red") + 
+  facet_wrap(~topic, scales = "free_y") +
+  xlab("Date") +
+  ylab("Mean normalized sentiment") + 
+  theme_bw()
+
+```

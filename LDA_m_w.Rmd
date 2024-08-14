@@ -1,0 +1,146 @@
+---
+title: "Men/Women"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+1) Data
+```{r}
+#m
+thesis.df_social_m <- thesis.df_social %>% filter(Демографія == 'Чоловік')
+thesis.df_social_m2 <- thesis.df_social_m %>% filter(Джерело != 'telegram.me') 
+#thesis.df_social_m2 <- thesis.df_social_m2 %>% filter(Тип.посту != 'Пост')
+
+#w
+thesis.df_social_w <- thesis.df_social %>% filter(Демографія == 'Жінка')
+%thesis.df_social_w2 <- thesis.df_social_w %>% filter(Джерело != 'telegram.me')
+```
+
+
+2) Mallet 
+```{r}
+topic.model_social_m2 <- MalletLDA(num.topics=35) # number of topics
+topic.model_social_m2$setRandomSeed(12345L)
+
+mallet.instances_social_m2 <- mallet.import(text.array=as.character(thesis.df_social_m2$cleaned_post),
+                                  stoplist="stopwords.txt") 
+
+topic.model_social_m2$loadDocuments(mallet.instances_social_m2) 
+
+topic.model_social_m2$setAlphaOptimization(20, 50) # optimizing hyperparameters
+
+vocabulary_social_m2 <- topic.model_social_m2$getVocabulary() # corpus dictionary
+word.freqs_social_m2 <- mallet.word.freqs(topic.model_social_m2) # frequency table
+```
+
+
+```{r}
+set.seed(123)
+topic.model_social_m2$train(500)
+topic.model_social_m2$maximize(10)
+doc.topics_social_m2 <- mallet.doc.topics(topic.model_social_m2, smoothed=TRUE, normalized=TRUE)
+topic.words_social_m2 <- mallet.topic.words(topic.model_social_m2, smoothed=TRUE, normalized=TRUE)
+topic.labels_social_m2 <- mallet.topic.labels(topic.model_social_m2, topic.words_social, 10)
+
+top.docs <- function(doc.topics, topic, docs, top.n=49) {
+    head(docs[order(-doc.topics[,topic])], top.n)
+}
+
+#r9_m = as.data.frame(top.docs(doc.topics_social_m2, 9, thesis.df_social_m2$Дайджест.текста))
+ 
+lapply(1:nrow(topic.words_social_m2), function(k) {
+    top <- mallet.top.words(topic.model_social_m2, topic.words_social_m2[k,], 10) %>% select("term")
+    cat(paste(k, top, "\n")) 
+})
+```
+
+```{r}
+m3  = as.data.frame(top.docs(doc.topics_social_m2, 3, thesis.df_social_m2$Дайджест.текста))
+r3.2 <- as.data.frame(r3[c(3, 11, 15), ])
+r9.2 <- as.data.frame(r9_m[c(2, 5, 7, 10, 12), ])
+r22.2 <-as.data.frame(r22[c(1, 10, 11, 12, 13), ])
+r27.2 <- as.data.frame(r27[c(1, 9, 13, 14), ])
+
+
+write.xlsx(sm27, 'D://mallet/s27.xlsx')
+```
+
+```{r}
+topic_labels_social_m <- mallet.topic.labels(topic.model_social_m, num.top.words = 2)
+topic_clusters2 <- mallet.topic.hclust(doc.topics2, topic.words2, balance = 0.5)
+plot(topic_clusters2, labels=topic_labels2, xlab = "", )
+```
+
+Visualization M
+```{r}
+library(dfrtopics)
+library(ggplot2)
+
+m_social_m2 <- mallet_model(doc_topics = doc.topics_social_m2, doc_ids = thesis.df_social_m2$id, vocab = 
+vocabulary_social_m2, topic_words = topic.words_social_m2, model = topic.model_social_m2)
+meta_social_m2 <- data.frame(id = thesis.df_social_m2$id, pubdate = as.Date(thesis.df_social_m2$Дата, "%d.%m.%Y"))
+metadata(m_social_m2) <- meta_social_m2
+series_social_m2 <- a(m_social_m2, 'days')
+theme_update(strip.text=element_text(size=7), 
+axis.text=element_text(size=7))
+
+a(m_social_m2) %>%
+plot_series(labels=topic_labels(m_social_m2, 2))
+
+```
+
+```{r}
+install.packages('plotly')
+library(plotly)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+
+
+cols = rainbow(35, s=.6, v=.9)[sample(1:35,35)]
+
+plot_social_m2 = ggplot(series_social_m2, aes(x=pubdate, y=weight, fill=as.character(topic)))
+plot_social_m2 + 
+  geom_area() +
+  geom_area(alpha=0.6 , size=.2, colour="white") +
+  theme_bw() + scale_fill_manual(values=cols)
+  
+save.mallet.state(topic.model = topic.model_social_m2, state.file = "D://mallet/social_m2_mallet_state.gz")
+mallet.topic.model.write(topic.model = topic.model_social_m2, 'D://mallet/social_m2_mal.model')
+```
+
+
+Mallet w
+```{r}
+topic.model_social_w2 <- MalletLDA(num.topics=35) # number of topics
+topic.model_social_w2$setRandomSeed(12345L)
+
+mallet.instances_social_w2 <- mallet.import(text.array=as.character(thesis.df_social_w2$cleaned_post),
+                                  stoplist="stopwords.txt") 
+
+topic.model_social_w2$loadDocuments(mallet.instances_social_w2) 
+
+topic.model_social_w2$setAlphaOptimization(20, 50) # optimizing hyperparameters
+
+vocabulary_social_w2 <- topic.model_social_w2$getVocabulary() # corpus dictionary
+word.freqs_social_w2 <- mallet.word.freqs(topic.model_social_w2) # frequency table
+```
+
+```{r}
+
+set.seed(123)
+topic.model_social_w2$train(500)
+topic.model_social_w2$maximize(10)
+doc.topics_social_w2 <- mallet.doc.topics(topic.model_social_w2, smoothed=TRUE, normalized=TRUE)
+topic.words_social_w2 <- mallet.topic.words(topic.model_social_w2, smoothed=TRUE, normalized=TRUE)
+topic.labels_social_w2 <- mallet.topic.labels(topic.model_social_w2, topic.words_social_w2, 10)
+
+lapply(1:nrow(topic.words_social_w2), function(k) {
+    top <- mallet.top.words(topic.model_social_w2, topic.words_social_w2[k,], 10) %>% select("term")
+    cat(paste(k, top, "\n")) 
+})
+```
+
