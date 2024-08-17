@@ -22,14 +22,14 @@ thesis.df2$Дата <- as.Date(thesis.df2$Дата, "%d.%m.%Y")
 
 2) Filtering
 ```{r}
-#thesis.df = as.data.frame(thesis.df$Дайджест.текста[!duplicated(thesis.df$Дайджест.текста)])
 
-
+# posts and reposts (not using comments made by people)
 thesis.df2 <- thesis.df2 %>% filter(Тип.посту == 'Пост' | Тип.посту == 'Репост')
 
+# duplicates
 thesis.df2 = thesis.df2[!duplicated(thesis.df2$cleaned_post), ]
 
-#data social new pro
+# removing users with advertisement posts
 thesis.df2_w = thesis.df2[grepl("bot ", thesis.df2$Дайджест.текста),]
 thesis.df2 = thesis.df2[!grepl("пиар", thesis.df2$Місце.публікації),]
 thesis.df2 = thesis.df2[!grepl("ПИАР", thesis.df2$Місце.публікації),]
@@ -53,6 +53,7 @@ library(rlang)
 library(readr)
 write_lines(stopwords("ru"), "stopwords.txt")
 stopwords_ru = stopwords("ru")
+
 stopwords_ai = c("интеллект", "искусственный", "и", "на", "в", "по", "или", "для", "в", "а", "как", "это", "с", "мой", "также", "что", "ии", "ai", "который", "твой", "сей", "ком", "свой", "слишком", "нами", "весь", "будь", "чаще", "ваш", "наш", "затем", "еще", "тот", "каждый", "мочь", "оба", "зато", "ваш", "такой", "нередко", "откуда", "очень", "сам", "ты", "однако", "сразу", "кроме", "вообще", "хороший", "пока", "ещё", "intelligence", "artificial", "the", "in", "learning", "to", "machine")
 
 stopwords_com = c("год", "технология", "компания", "новый", "система", "цифровой", "использовать", "время", "решение", "создать", "мир", "развитие", "первый", "основа", "использование", "область", "являться", "приложение", "читать", "пользователь", "сфера")
@@ -131,10 +132,10 @@ topic.labels_SM_N <- mallet.topic.labels(model_SM_N, topic.words_SM_N, 10)
 vocabulary_SM_N <- model_SM_N$getVocabulary()
 ```
 
-Most representative documents
+Most representative documents and keywords
 
 ```{r}
-#keywords for topics
+
 lapply(1:nrow(topic.words_SM_N), function(k) {
     top <- mallet.top.words(model_SM_N, topic.words_SM_N[k,], 10) %>% select("term")
     cat(paste(k, top, "\n")) 
@@ -157,7 +158,7 @@ plot(topic_clusters_SM_N, labels=topic_labels_SM_N, xlab = "", )
 
 5) Visualization
 
-shares of topics 
+Shares of topics 
 ```{r}
 
 m_SM_N <- mallet_model(doc_topics = doc.topics_SM_N, doc_ids = thesis.df2$id, vocab = 
@@ -171,6 +172,7 @@ plot_series(labels=topic_labels(m_SM_N, 2))
 
 ```
 
+Shares of topics 2
 
 ```{r}
 
@@ -189,22 +191,22 @@ plot2 +
 
 6) Sentiment analysis
 ```{r}
-# Get the most probable topic for each document
+# the most probable topic for each document
 get_top_topic <- function(doc_topic_prob) {
   max_prob_index <- which.max(doc_topic_prob)
   return(max_prob_index)
 }
 
-# Extract the most probable topic for each document
+# the most probable topic for each document
 document_topics_SM_N <- apply(doc.topics_SM_N, 1, get_top_topic)
 
-# Create a dataframe with document index and corresponding most probable topic
+# a dataframe with document index and corresponding most probable topic
 document_topics_SM_N <- data.frame(
   document_index = seq_along(document_topics_SM_N),
   topic = document_topics_SM_N
 )
 
-#add topics to df
+# add topics to df
 thesis.df2$document_index <- seq_len(nrow(thesis.df2))
 
 # Merge document_topics_social with thesis.df_social based on document index
@@ -215,14 +217,14 @@ merged_df_SM_N$document_index <- NULL
 
 
 
-#word scores data
+# word scores data (dictionary)
 word_scores_df <- read.csv('D://mallet/kartaslovsent.csv', encoding = 'UTF-8', sep = ';')
 
 word_scores_df <- word_scores_df %>% filter(pstvNgtvDisagreementRatio < 0.5)
 word_scores_df <- word_scores_df %>% filter(!term %in% stopwords)
 word_scores_df <- word_scores_df %>% select(term, tag, value)
 
-#an empty vector to store scores for each document
+# an empty vector to store scores for each document
 total_scores_SM_N <- numeric(length = nrow(merged_df_SM_N))
 
 # Function to calculate normalized score for a document
@@ -245,10 +247,10 @@ calculate_normalized_score <- function(document_text) {
   return(normalized_score)
 }
 
-# Apply the function to each document in cleaned_post
+# the function to each document in cleaned_post
 normalized_scores_SM_N <- sapply(merged_df_SM_N$cleaned_post, calculate_normalized_score)
 
-# Add the normalized_scores as a new column to merged_df_ew
+# the normalized_scores as a new column to merged_df_ew
 merged_df_SM_N$normalized_score <- normalized_scores_SM_N
 
 # Filter out posts with 'not' in order to exclude posts with the opposite score

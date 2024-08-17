@@ -7,12 +7,15 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-1) Filtering
+1)Filtering
 ```{r}
 
 big <- c('Київ', 'Харків', 'Дніпро', 'Одеса', 'Львів', 'Запоріжжя', 'Кривий Ріг', 'Миколаїв', 'Маріуполь', 'Вінниця')
-thesis.df_social_b <- thesis.df_social_ew[thesis.df_social_ew$Місто %in% big, ]
-  
+thesis.df_social_b <- thesis.df_social[thesis.df_social$Місто %in% big, ]
+```
+
+2) Mallet big, small
+```{r}
 topic.model_social_b <- MalletLDA(num.topics=35) # number of topics
 topic.model_social_b$setRandomSeed(12345L)
 
@@ -69,7 +72,7 @@ lapply(1:nrow(topic.words_social_b), function(k) {
     cat(paste(k, top, "\n")) 
 })
 
-big23 = as.data.frame(top.docs(doc.topics_social_b, 23, thesis.df_social_b$Дайджест.текста))
+#big23 = as.data.frame(top.docs(doc.topics_social_b, 23, thesis.df_social_b$Дайджест.текста))
 
 
 
@@ -78,8 +81,8 @@ lapply(1:nrow(topic.words_social_s), function(k) {
     cat(paste(k, top, "\n")) 
 })
 
-sm27 = as.data.frame(top.docs(doc.topics_social_s, 27, thesis.df_social_s$Дайджест.текста))
+#sm27 = as.data.frame(top.docs(doc.topics_social_s, 27, thesis.df_social_s$Дайджест.текста))
 
-save.mallet.state(topic.model = topic.model_social_s, state.file = "D://mallet/social_mallet_s_state.gz")
-mallet.topic.model.write(topic.model = topic.model_social_s, 'D://mallet/social_s_mal.model')
+#save.mallet.state(topic.model = topic.model_social_s, state.file = "D://mallet/social_mallet_s_state.gz")
+#mallet.topic.model.write(topic.model = topic.model_social_s, 'D://mallet/social_s_mal.model')
 ```

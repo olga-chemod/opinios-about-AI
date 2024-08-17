@@ -19,10 +19,9 @@ thesis.df$Дата <- as.Date(thesis.df$Дата, "%d.%m.%Y")
 2)Filtering
 ```{r}
 
-
+# posts and reposts are used, comments by people are not 
 #thesis.df = as.data.frame(thesis.df$Дайджест.текста[!duplicated(thesis.df$Дайджест.текста)])
 thesis.df <- thesis.df %>% filter(Тип.посту == 'Пост' | Тип.посту == 'Репост')
-
 
 ```
 
